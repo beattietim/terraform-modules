@@ -34,10 +34,13 @@ variable "webserver_port" {
   default     = 8081
 }
 
-data "aws_vpc" "default" {
-  default = true
+variable "custom_tags" {
+  description = "Custom tags to set on Instances of the ASG"
+  type        = map(string)
+  default     = {}
 }
 
-data "aws_subnet_ids" "default" {
-  vpc_id = data.aws_vpc.default.id
+variable "enable_autoscaling" {
+  description = "If true then enable auto scaling"
+  type        = bool
 }

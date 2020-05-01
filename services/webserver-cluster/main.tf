@@ -26,6 +26,14 @@ data "template_file" "user_data" {
   }
 }
 
+data "aws_vpc" "default" {
+  default = true
+}
+
+data "aws_subnet_ids" "default" {
+  vpc_id = data.aws_vpc.default.id
+}
+
 resource "aws_launch_configuration" "example-launch-config" {
   image_id = "ami-0e26853e06c2cff5a"
   instance_type = var.instance_type
@@ -52,6 +60,16 @@ resource "aws_autoscaling_group" "example-asg" {
     key                 = "Name"
     value               = var.cluster_name
     propagate_at_launch = true
+  }
+
+  dynamic "tag" {
+    for_each = var.custom_tags
+
+    content {
+      key                 = tag.key
+      value               = tag.value
+      propagate_at_launch = true
+    }
   }
 }
 
@@ -144,4 +162,26 @@ resource "aws_lb_listener_rule" "asg" {
     type             = "forward"
     target_group_arn = aws_lb_target_group.asg.arn
   }
+}
+
+resource "aws_autoscaling_schedule" "scale_out_during_business_hours" {
+  count = var.enable_autoscaling ? 1 : 0
+
+  autoscaling_group_name  = aws_autoscaling_group.example-asg.name
+  scheduled_action_name   = "scale-out-during-business-hours"
+  min_size                = 2
+  max_size                = 10
+  desired_capacity        = 10
+  recurrence              = "0 9 * * *"
+}
+
+resource "aws_autoscaling_schedule" "scale_in_at_night" {
+  count = var.enable_autoscaling ? 1 : 0
+
+  autoscaling_group_name  = aws_autoscaling_group.example-asg.name
+  scheduled_action_name   = "scale-in-at-night"
+  min_size                = 2
+  max_size                = 10
+  desired_capacity        = 2
+  recurrence              = "0 17 * * *"
 }

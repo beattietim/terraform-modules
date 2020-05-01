@@ -44,3 +44,8 @@ variable "enable_autoscaling" {
   description = "If true then enable auto scaling"
   type        = bool
 }
+
+variable "enable_new_user_data" {
+  description = "Enable the new user data"
+  type        = bool
+}
